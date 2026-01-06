@@ -1,0 +1,985 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Axa - dbt Platform | Gouvernance Data, Qualité & Productivité</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #fd6603 0%, #7b2de4 100%);
+            color: #333;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #fd6603 0%, #7b2de4 100%);
+            color: white;
+            padding: 40px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.95;
+        }
+        
+        .tabs {
+            display: flex;
+            border-bottom: 3px solid #e0e0e0;
+            background: #f5f5f5;
+            flex-wrap: wrap;
+        }
+        
+        .tab-btn {
+            flex: 1;
+            padding: 15px;
+            text-align: center;
+            cursor: pointer;
+            border: none;
+            background: none;
+            font-size: 0.95em;
+            font-weight: 600;
+            color: #666;
+            transition: all 0.3s ease;
+            border-bottom: 3px solid transparent;
+            margin-bottom: -3px;
+            min-width: 140px;
+        }
+        
+        .tab-btn:hover {
+            background: #efefef;
+            color: #fd6603;
+        }
+        
+        .tab-btn.active {
+            color: #fd6603;
+            border-bottom-color: #fd6603;
+            background: white;
+        }
+        
+        .tab-content {
+            display: none;
+            padding: 30px;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .section-title {
+            font-size: 1.5em;
+            color: #333;
+            margin-bottom: 20px;
+            border-bottom: 3px solid #fd6603;
+            padding-bottom: 10px;
+        }
+        
+        .stage-box {
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-left: 4px solid #fd6603;
+        }
+        
+        .stage-box h3 {
+            color: #fd6603;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .stage-icon {
+            background: #fd6603;
+            color: white;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 0.9em;
+        }
+        
+        .stage-box p {
+            color: #555;
+            line-height: 1.6;
+            margin-bottom: 10px;
+        }
+        
+        .issue-box {
+            background: #fce4ec;
+            border-left: 4px solid #d32f2f;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 4px;
+            color: #555;
+        }
+        
+        .benefit-box {
+            background: #e8f5e9;
+            border-left: 4px solid #2e7d32;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 4px;
+            color: #333;
+            line-height: 1.8;
+        }
+        
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background: white;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+        
+        .comparison-table thead {
+            background: linear-gradient(135deg, #fd6603 0%, #7b2de4 100%);
+            color: white;
+        }
+        
+        .comparison-table th {
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+        }
+        
+        .comparison-table td {
+            padding: 12px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        .comparison-table tr:hover {
+            background: #f9f9f9;
+        }
+        
+        .current {
+            background: #ffe6e6;
+        }
+        
+        .future {
+            background: #e6f2ff;
+        }
+        
+        .pillar-box {
+            background: linear-gradient(135deg, #f5f5f5 0%, #e8e8e8 100%);
+            border: 2px solid #fd6603;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .pillar-box h3 {
+            color: #fd6603;
+            font-size: 1.2em;
+            margin-bottom: 15px;
+        }
+        
+        .pillar-box .metric {
+            font-size: 2em;
+            font-weight: bold;
+            color: #2e7d32;
+            margin: 10px 0;
+        }
+        
+        .tools-list {
+            list-style: none;
+            margin: 12px 0;
+        }
+        
+        .tools-list li {
+            padding: 8px 0;
+            border-bottom: 1px solid #e0e0e0;
+            color: #555;
+        }
+        
+        .tools-list li:before {
+            content: "✓ ";
+            color: #fd6603;
+            font-weight: bold;
+            margin-right: 8px;
+        }
+        
+        .highlight-blue {
+            background: #e3f2fd;
+            padding: 15px;
+            border-left: 4px solid #1976d2;
+            border-radius: 4px;
+            margin: 15px 0;
+        }
+        
+        .highlight-green {
+            background: #e8f5e9;
+            padding: 15px;
+            border-left: 4px solid #2e7d32;
+            border-radius: 4px;
+            margin: 15px 0;
+        }
+        
+        .two-col {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin: 20px 0;
+        }
+        
+        @media (max-width: 768px) {
+            .two-col {
+                grid-template-columns: 1fr;
+            }
+            .header h1 {
+                font-size: 1.8em;
+            }
+            .tab-btn {
+                font-size: 0.8em;
+                padding: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- HEADER -->
+        <div class="header">
+            <h1>🚀 dbt Platform chez Axa</h1>
+            <p>Réduction des Coûts Databricks | Gouvernance Data | Autonomie Métier</p>
+        </div>
+
+        <!-- TABS -->
+        <div class="tabs">
+            <button class="tab-btn active" onclick="switchTab('contexte')">🎯 Contexte Axa</button>
+            <button class="tab-btn" onclick="switchTab('challenges')">⚠️ Défis Actuels</button>
+            <button class="tab-btn" onclick="switchTab('pillars')">💡 Piliers de Valeur</button>
+            <button class="tab-btn" onclick="switchTab('positioning')">🔗 Positionnement dbt</button>
+            <button class="tab-btn" onclick="switchTab('cases')">📊 Cas d'Usages Référents</button>
+            <button class="tab-btn" onclick="switchTab('next')">📅 Prochaines Étapes</button>
+        </div>
+
+        <!-- TAB 1: CONTEXTE -->
+        <div id="contexte" class="tab-content active">
+            <h2 class="section-title">🎯 Contexte Axa : Digitalisation Data & Gouvernance</h2>
+
+            <div class="stage-box">
+                <h3><span class="stage-icon">🏢</span> Axa Today : Landscape Actuel</h3>
+                <p>Axa Group Operations gère un écosystème data fragmenté avec plusieurs entités et technologies :</p>
+                
+                <div class="two-col" style="margin-top: 20px;">
+                    <div style="border: 1px solid #e0e0e0; border-radius: 8px; padding: 15px; background: #f9f9f9;">
+                        <strong style="color: #fd6603;">Warehouse Principal</strong><br>
+                        <ul class="tools-list">
+                            <li>Databricks (standard groupe)</li>
+                            <li>Snowflake (pockets)</li>
+                            <li>Redshift (legacy)</li>
+                        </ul>
+                    </div>
+                    
+                    <div style="border: 1px solid #e0e0e0; border-radius: 8px; padding: 15px; background: #f9f9f9;">
+                        <strong style="color: #fd6603;">Entités & Adoption</strong><br>
+                        <ul class="tools-list">
+                            <li>Axa Japan : dbt Core ✅</li>
+                            <li>Axa Excel : dbt Core ✅</li>
+                            <li>Direct Assurance, Axa Partner, etc.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="stage-box">
+                <h3><span class="stage-icon">📋</span> Organisation Data chez Axa</h3>
+                <p><strong>Structure centralisée & décentralisée :</strong></p>
+                <ul class="tools-list">
+                    <li>Axa Group Operations = Plateforme centrale (ne s'impose pas)</li>
+                    <li>Chaque entité avec ses propres pratiques data</li>
+                    <li>Data Office Axa = cellule d'amélioration (évangéliste data)</li>
+                    <li>Contexte réglementaire : ISVAP, Solvency II, compliance assurance</li>
+                </ul>
+            </div>
+
+            <div class="stage-box">
+                <h3><span class="stage-icon">💰</span> Investment Current</h3>
+                <p><strong>Coûts actuels importants :</strong></p>
+                <div class="highlight-blue">
+                    Databricks coûte cher → Focus important sur optimisation DBU (Data Bytes Units)<br>
+                    Vigilance vis-à-vis des vendor lock-in (dépendance aux fonctionnalités propriétaires)
+                </div>
+            </div>
+
+            <div class="stage-box">
+                <h3><span class="stage-icon">🎯</span> Ambitions Axa</h3>
+                <ul class="tools-list">
+                    <li><strong>Court terme :</strong> Framework réutilisable pour BI (70-80% des use cases)</li>
+                    <li><strong>Medium terme :</strong> Autonomie métier (moins de dépendance DE)</li>
+                    <li><strong>Long terme :</strong> Gouvernance data scalable & réduction coûts Databricks</li>
+                    <li><strong>Global :</strong> Qualité data, linéage, compliance</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- TAB 2: CHALLENGES -->
+        <div id="challenges" class="tab-content">
+            <h2 class="section-title">⚠️ Défis Identifiés : Pourquoi dbt ?</h2>
+
+            <div class="stage-box">
+                <h3><span class="stage-icon">🔴</span> Pain Point #1 : Fragmentation des Pratiques</h3>
+                <div class="issue-box">
+                    <strong>Problème :</strong> Chaque entité Axa développe à sa manière<br>
+                    • Pas de cadre d'outillage unique<br>
+                    • Use cases BI mal structurés, mal testés, mal documentés<br>
+                    • Difficile à scaler, à maintenir, à auditer<br>
+                    <br>
+                    <strong>Impact :</strong> Coûts élevés, qualité décente, confiance métier réduite
+                </div>
+            </div>
+
+            <div class="stage-box">
+                <h3><span class="stage-icon">🔴</span> Pain Point #2 : Coûts Databricks Élevés</h3>
+                <div class="issue-box">
+                    <strong>Problème :</strong> Full refresh quotidien sans optimalité<br>
+                    • Queries inefficaces (pas de state-awareness)<br>
+                    • Procédures stockées legacy + compute redondant<br>
+                    • 10-15% gains estimés via orchestration intelligente<br>
+                    <br>
+                    <strong>Impact :</strong> Budget cloud sous pression
+                </div>
+            </div>
+
+            <div class="stage-box">
+                <h3><span class="stage-icon">🔴</span> Pain Point #3 : Data Quality & Confiance Métier</h3>
+                <div class="issue-box">
+                    <strong>Problème :</strong> Erreurs data détectées trop tard<br>
+                    • Pas de tests automatisés<br>
+                    • Datawarehouse "garbage in, garbage out"<br>
+                    • Impact réglementaire (assurance = sensible)<br>
+                    <br>
+                    <strong>Impact :</strong> Méfiance métier, décisions basées sur données stale/erronées
+                </div>
+            </div>
+
+            <div class="stage-box">
+                <h3><span class="stage-icon">🔴</span> Pain Point #4 : BI Inefficace</h3>
+                <div class="issue-box">
+                    <strong>Problème :</strong> Data Engineers goulot d'étranglement<br>
+                    • Métiers demandent 1 rapport/mois → 1 mois pour DElivrer<br>
+                    • Requêtes SQL "pas propres" → maintenance pénible<br>
+                    • BI tools (Tableau, Qlik, etc.) manquent de gouvernance sql<br>
+                    <br>
+                    <strong>Impact :</strong> Time-to-insight lent, autonomie métier faible
+                </div>
+            </div>
+
+            <div class="stage-box">
+                <h3><span class="stage-icon">🔴</span> Pain Point #5 : Databricks Évolue Vite (DLT, Lineage, Assets)</h3>
+                <div class="highlight-blue">
+                    <strong>Contexte :</strong> Databricks a ajouté récemment :<br>
+                    • Delta Live Tables (pipelines + quality)<br>
+                    • Lineage natif<br>
+                    • Asset management<br>
+                    <br>
+                    <strong>Mais :</strong> N'est pas structurant sur la façon de coder/tester → reste trop "open"<br>
+                    Axa cherche un <strong>framework d'ingénierie</strong> (prescriptif) + outils
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 3: PILLARS -->
+        <div id="pillars" class="tab-content">
+            <h2 class="section-title">💡 Trois Piliers de Valeur dbt pour Axa</h2>
+
+            <div class="stage-box">
+                <h3><span class="stage-icon">1️⃣</span> Pilier #1 : Réduction Coûts Databricks via State-Aware Orchestration</h3>
+                
+                <div class="pillar-box">
+                    <div style="text-align: left;">
+                        <p style="color: #333;"><strong>🔍 Qu'est-ce que State-Aware Orchestration ?</strong></p>
+                        <p style="color: #666; margin-top: 10px; font-size: 0.95em; line-height: 1.8;">
+                            Plutôt que de faire tourner TOUTES les transformations chaque jour,<br>
+                            dbt Platform regarde intelligemment :<br>
+                            • État de la source de données<br>
+                            • Dépendances entre modèles<br>
+                            • Ce qui a réellement changé<br>
+                            → Fait tourner SEULEMENT ce qui est nécessaire
+                        </p>
+                    </div>
+                </div>
+
+                <div class="benefit-box">
+                    <strong>📊 Impact Estimé :</strong><br>
+                    • <strong>20-25% des transformations n'ont PAS besoin de tourner</strong> (sources inchangées)<br>
+                    • Réduction du temps de compute total<br>
+                    • Pour Databricks : <strong>10-15% DBU savings</strong> (ex : €50-100k/an pour Axa)<br>
+                    <br>
+                    <strong>Exemple Obie Insurance (client dbt) :</strong> 12h pipeline → 10h optimal, avec fiabilité ++
+                </div>
+
+                <p style="margin-top: 15px; color: #555;">
+                    <strong>Bénéfice additionnel :</strong> Root cause analysis plus rapide si problème → gain de temps debugging
+                </p>
+            </div>
+
+            <div class="stage-box">
+                <h3><span class="stage-icon">2️⃣</span> Pilier #2 : Productivité Data Engineering (-25% effort)</h3>
+                
+                <div class="pillar-box">
+                    <div style="text-align: left;">
+                        <p style="color: #333;"><strong>🎯 Qu'est-ce qui change ?</strong></p>
+                        <p style="color: #666; margin-top: 10px; font-size: 0.95em; line-height: 1.8;">
+                            dbt automatise les tâches à faible valeur ajoutée :<br>
+                            • Gouvernance (tests, documentations)<br>
+                            • Linéage automatique<br>
+                            • CI/CD pipelines<br>
+                            • Onboarding nouvelles ressources<br>
+                            • Change impact analysis
+                        </p>
+                    </div>
+                </div>
+
+                <div class="benefit-box">
+                    <strong>📊 Impact Estimé :</strong><br>
+                    • <strong>~25% productivité gains</strong> (tâches manuelles éliminées)<br>
+                    • Onboarding nouveau DE : <strong>1 mois → 3 jours</strong> (TF1 case)<br>
+                    • Self-service support : "Claude" + dbt docs = -40% support ad-hoc<br>
+                    <br>
+                    <strong>Pour équipe Axa de 15 DE + 15 DA :</strong><br>
+                    → Réduction DE (support burden) + augmentation DA (plus de données propres)
+                </div>
+
+                <p style="margin-top: 15px; color: #555;">
+                    <strong>Vision :</strong> Équipes peuvent focus sur innovation, pas répétitif
+                </p>
+            </div>
+
+            <div class="stage-box">
+                <h3><span class="stage-icon">3️⃣</span> Pilier #3 : Data Quality & Confiance Métier</h3>
+                
+                <div class="pillar-box">
+                    <div style="text-align: left;">
+                        <p style="color: #333;"><strong>🎯 Qu'est-ce qui change ?</strong></p>
+                        <p style="color: #666; margin-top: 10px; font-size: 0.95em; line-height: 1.8;">
+                            • Tests automatisés à la source (not just dashboards)<br>
+                            • Dashboard qualité dès matin : fraîcheur, anomalies<br>
+                            • Root cause isolation rapide<br>
+                            • SLA data transparents
+                        </p>
+                    </div>
+                </div>
+
+                <div class="benefit-box">
+                    <strong>📊 Impact Référent (TF1 - client dbt) :</strong><br>
+                    • Avant : <strong>268 erreurs data/an</strong><br>
+                    • Après : <strong>3 erreurs/an</strong> (99.9% reduction)<br>
+                    • Sauvegarde financière : €250k/an (erreurs calcs assurance)<br>
+                    • Bénéfice immédiat : Métiers ont CONFIANCE → plus de use cases BI<br>
+                    • Enabler pour GenAI : données propres = meilleurs modèles
+                </div>
+
+                <p style="margin-top: 15px; color: #555;">
+                    <strong>Pour Axa :</strong> Réglementaire (ISVAP, Solvency II) = data quality critique
+                </p>
+            </div>
+
+        </div>
+
+        <!-- TAB 4: POSITIONING -->
+        <div id="positioning" class="tab-content">
+            <h2 class="section-title">🔗 Positionnement dbt vs Alternatives</h2>
+
+            <div class="stage-box">
+                <h3><span class="stage-icon">📌</span> dbt Core vs dbt Fusion vs dbt Platform</h3>
+                
+                <table class="comparison-table">
+                    <thead>
+                        <tr>
+                            <th>Aspect</th>
+                            <th>dbt Core</th>
+                            <th>dbt Fusion</th>
+                            <th>dbt Platform</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Sweet Spot Team</strong></td>
+                            <td>3-4 DE max</td>
+                            <td>3-4 DE max</td>
+                            <td>10+ DE (scaling)</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Architecture</strong></td>
+                            <td>Python/YAML (legacy)</td>
+                            <td>Rust (faster)</td>
+                            <td>Rust + orchestration</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Self-serve Support</strong></td>
+                            <td>-</td>
+                            <td>-</td>
+                            <td>✅ Low-code/NLP</td>
+                        </tr>
+                        <tr>
+                            <td><strong>State-Aware Orch.</strong></td>
+                            <td>-</td>
+                            <td>-</td>
+                            <td>✅ Natif</td>
+                        </tr>
+                        <tr>
+                            <td><strong>FinOps / Cost Tracking</strong></td>
+                            <td>-</td>
+                            <td>-</td>
+                            <td>✅ (à la requête)</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Data Quality Dashboard</strong></td>
+                            <td>-</td>
+                            <td>-</td>
+                            <td>✅</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Databricks Optimized</strong></td>
+                            <td>-</td>
+                            <td>-</td>
+                            <td>✅ (DLT compatible)</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <p style="margin-top: 15px; color: #666; font-size: 0.95em;">
+                    <strong>💡 Pour Axa :</strong> dbt Platform car scaling multi-entités + besoin de governance automatisée
+                </p>
+            </div>
+
+            <div class="stage-box">
+                <h3><span class="stage-icon">🤝</span> dbt Platform vs Dataiku vs Databricks DLT</h3>
+                
+                <div class="highlight-blue">
+                    <strong>vs Dataiku :</strong><br>
+                    • Dataiku = modeling tools (derniers 100m)<br>
+                    • dbt = lifecycle management (9999m)<br>
+                    • dbt excels : testing, CI/CD, lineage, governance<br>
+                    → Pour Axa use case (BI + governance) : <strong>dbt > Dataiku</strong>
+                </div>
+
+                <div class="highlight-blue" style="margin-top: 15px;">
+                    <strong>vs Databricks DLT (Delta Live Tables) :</strong><br>
+                    • DLT = pipelines + quality (databricks-native)<br>
+                    • dbt = agnostic framework + orchestration<br>
+                    <br>
+                    <strong>Avantage dbt :</strong><br>
+                    ✓ Prescriptive (how to code) vs DLT (too open)<br>
+                    ✓ Portable (Snowflake, Redshift, BigQuery...)<br>
+                    ✓ State-aware orchestration (smarter scheduling)<br>
+                    ✓ Ecosystem (dbt packages, marketplace)<br>
+                    <br>
+                    <strong>Avantage DLT :</strong><br>
+                    ✓ Native Databricks (tight integration)<br>
+                    ✓ No extra cost (vs dbt Platform paid)<br>
+                </div>
+
+                <div style="background: #fff3e0; border-left: 4px solid #e65100; padding: 15px; margin-top: 15px; border-radius: 4px;">
+                    <strong>💡 Guillaume's Take (Axa perspective) :</strong><br>
+                    "Databricks has improved (DLT, lineage), mais n'est pas assez prescriptif sur la façon de coder/tester.<br>
+                    dbt + Databricks = best combo pour Axa (agnosticism + prescriptive framework)."
+                </div>
+            </div>
+
+            <div class="stage-box">
+                <h3><span class="stage-icon">✅</span> Fit pour Axa</h3>
+                
+                <div class="benefit-box">
+                    <strong>✅ Pourquoi dbt Platform pour Axa :</strong><br>
+                    • Databricks est standard → dbt Platform optimisé pour<br>
+                    • Multi-entités → governance centralisée (pas imposée)<br>
+                    • 70-80% use cases = BI (BI + tests = sweet spot dbt)<br>
+                    • Data Office qui cherche cadre d'outillage<br>
+                    • Coûts importants → state-aware savings<br>
+                    • Réglementaire → data quality critical<br>
+                    <br>
+                    <strong>❌ Où dbt ne joue pas :</strong><br>
+                    • Data Science / ML (Databricks + Dataiku > dbt)<br>
+                    → mais c'est 20-30% des use cases (not core)
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 5: CASES -->
+        <div id="cases" class="tab-content">
+            <h2 class="section-title">📊 Cas d'Usages Référents</h2>
+
+            <div class="stage-box">
+                <h3><span class="stage-icon">🌟</span> Cas #1 : TFA (Group CEO Piloted dbt)</h3>
+                <p><strong>Industrie :</strong> Assurance | <strong>Warehouse :</strong> Databricks | <strong>Équipe :</strong> 15 DE + 15 DA</p>
+                
+                <div class="benefit-box">
+                    <strong>Résultat Année 1 (12 mois après go-live) :</strong><br><br>
+                    <strong style="color: #1976d2;">🎯 Data Quality :</strong><br>
+                    • Avant : 268 erreurs data/an<br>
+                    • Après : 3 erreurs/an<br>
+                    • Financial Impact : €250k/an avoided (calcul primes mal faites)<br><br>
+                    
+                    <strong style="color: #1976d2;">🎯 Productivité :</strong><br>
+                    • Onboarding : 1 mois → 3 days<br>
+                    • Productivity gain : 25% (governance automatisé)<br>
+                    • For externals : ROI of license from onboarding alone<br><br>
+                    
+                    <strong style="color: #1976d2;">🎯 Business Impact :</strong><br>
+                    • Métiers ont confiance → +4-5 rapports/mois (vs 1)<br>
+                    • Time-to-insight : -80% (1 jour vs 1 mois)<br>
+                    • GenAI ready : clean data = better models
+                </div>
+
+                <div style="background: #fff3e0; border-left: 4px solid #e65100; padding: 15px; margin-top: 15px; border-radius: 4px;">
+                    <strong>💡 Key Quote :</strong> "La vraie valeur c'est que maintenant les métiers font confiance à la plateforme. On reçoit beaucoup plus de demandes use cases. Et ça améliore tous nos projets GenAI car les données sont propres."
+                </div>
+            </div>
+
+            <div class="stage-box">
+                <h3><span class="stage-icon">🌟</span> Cas #2 : Veolia (Multi-Warehouse Portability)</h3>
+                <p><strong>Industrie :</strong> Environnement | <strong>Warehouses :</strong> GCP, Redshift, Databricks | <strong>Besoin :</strong> Agnosticism</p>
+                
+                <div class="benefit-box">
+                    <strong>Use Case :</strong> dbt comme couche agnostique au-dessus<br><br>
+                    • Développement pipeline une seule fois → déploie où profitable<br>
+                    • Renegociate contrats vendor → switch warehouse sans refactoring code<br>
+                    • Cost reduction : 15% Snowflake + 12% Databricks (2% Databricks because early)<br><br>
+                    
+                    <strong>For Axa Context :</strong> Même logique possible<br>
+                    → Future-proof contre Databricks vendor lock-in
+                </div>
+            </div>
+
+            <div class="stage-box">
+                <h3><span class="stage-icon">🌟</span> Cas #3 : Axa Japan & Axa Excel (Internal dbt Core)</h3>
+                <p><strong>Status :</strong> Already using dbt Core | <strong>Positive feedback :</strong> Data engineering team satisfied</p>
+                
+                <div class="benefit-box">
+                    • Axa Japan : dbt Core for structuring pipelines<br>
+                    • Axa Excel : intensive use, positive ROI<br>
+                    <br>
+                    <strong>→ Internal proof points :</strong> dbt works within Axa ecosystem<br>
+                    <strong>→ Opportunity :</strong> Leverage learnings, scale with Platform capabilities
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 6: NEXT -->
+        <div id="next" class="tab-content">
+            <h2 class="section-title">📅 Timeline : Adoption dbt chez Axa (12 mois)</h2>
+
+            <div class="stage-box" style="margin-bottom: 30px;">
+                <h3 style="text-align: center; margin-bottom: 25px;">🗺️ Roadmap Indicatif</h3>
+                <svg width="100%" height="140" viewBox="0 0 1000 140" style="margin: 10px 0;" preserveAspectRatio="xMidYMid meet">
+                    <!-- Ligne principale -->
+                    <line x1="40" y1="70" x2="960" y2="70" stroke="#fd6603" stroke-width="3"/>
+                    
+                    <!-- Phase 0: Discovery -->
+                    <circle cx="100" cy="70" r="12" fill="#fd6603"/>
+                    <text x="70" y="105" font-size="12" font-weight="bold" fill="#333">Discovery</text>
+                    
+                    <!-- Phase 1: Decision -->
+                    <circle cx="240" cy="70" r="12" fill="#fd6603"/>
+                    <text x="210" y="105" font-size="12" font-weight="bold" fill="#333">Decision</text>
+                    
+                    
+                    <!-- Phase 2: POC -->
+                    <circle cx="380" cy="70" r="12" fill="#fd6603"/>
+                    <text x="350" y="105" font-size="12" font-weight="bold" fill="#333">POC Setup</text>
+                    
+                    
+                    <!-- Phase 3: Pilot -->
+                    <circle cx="540" cy="70" r="12" fill="#fd6603"/>
+                    <text x="500" y="105" font-size="12" font-weight="bold" fill="#333">Production Pilot</text>
+                    
+                    
+                    <!-- Phase 4: Scaling -->
+                    <circle cx="700" cy="70" r="12" fill="#fd6603"/>
+                    <text x="660" y="105" font-size="12" font-weight="bold" fill="#333">Early Scaling</text>
+                    
+                    
+                    <!-- Phase 5: Go-Live -->
+                    <circle cx="860" cy="70" r="14" fill="#2e7d32"/>
+                    <text x="820" y="105" font-size="12" font-weight="bold" fill="#2e7d32">Go-Live</text>
+                    
+                </svg>
+            </div>
+
+            <!-- PHASE 1: DISCOVERY -->
+            <div class="stage-box">
+                <h3><span class="stage-icon">1️⃣</span> Discovery & Deep Dive</h3>
+                
+                <div class="highlight-green" style="margin-bottom: 15px;">
+                    <strong>🗓️ Événement Clé : Workshop 7 Janvier, 15h-16h</strong><br>
+                    📍 Axa Paris office
+                </div>
+
+
+
+                <div style="background: #e3f2fd; padding: 15px; border-radius: 8px; border-left: 4px solid #1976d2;">
+                    <strong>🎯 Outputs Workshop :</strong>
+                    <ul class="tools-list">
+                        <li>Alignment sur fit dbt for Axa (BI focus, quality, cost)</li>
+                        <li>POC scope rough draft (1-2 pipelines)</li>
+                        <li>Decision timeline</li>
+                        <li>Identifiaction partner SI (CGI?, Deloitte?, internal?)</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- PHASE 2: DECISION -->
+            <div class="stage-box">
+                <h3><span class="stage-icon">2️⃣</span> Decision & Planning</h3>
+                
+                <div style="background: #fff3cd; padding: 15px; border-radius: 8px; margin-bottom: 15px; border-left: 4px solid #ff9800;">
+                    <strong>📌 Activités Clés :</strong>
+                    <ul class="tools-list">
+                        <li>Stakeholder alignment : Data Office + Finance + each entité</li>
+                        <li>Data audit : inventaire 50+ BI pipelines actuels</li>
+                        <li>POC scope finalization : 2-3 pipelines pilotes</li>
+                        <li>Budget & timeline validation</li>
+                        <li>SI partner selection & contracting</li>
+                        <li>dbt Labs license setup (dbt Cloud + Platform)</li>
+                    </ul>
+                </div>
+
+                <div style="background: #e3f2fd; padding: 15px; border-radius: 8px; border-left: 4px solid #1976d2;">
+                    <strong>✅ Decision Gate :</strong><br>
+                    "Go / No-Go for POC?" → Expected: <strong>GO</strong> (contingent on business case alignment)
+                </div>
+            </div>
+
+            <!-- PHASE 3: POC -->
+            <div class="stage-box">
+                <h3><span class="stage-icon">3️⃣</span> POC & Team Training</h3>
+                
+                <div style="background: #f3e5f5; padding: 15px; border-radius: 8px; margin-bottom: 15px; border-left: 4px solid #7b2de4;">
+                    <strong>🔧 Technical Setup :</strong>
+                    <ul class="tools-list">
+                        <li>Databricks workspace provisioning</li>
+                        <li>dbt Cloud environment (dev + prod)</li>
+                        <li>Repository setup + CI/CD pipeline</li>
+                        <li>Team IDE setup (VS Code + dbt extension)</li>
+                    </ul>
+                </div>
+
+                <div style="background: #f3e5f5; padding: 15px; border-radius: 8px; margin-bottom: 15px; border-left: 4px solid #7b2de4;">
+                    <strong>🚀 POC Execution :</strong>
+                    <ul class="tools-list">
+                        <li><strong>2-3 small BI pipelines</strong> → migrate to dbt</li>
+                        <li>Data quality tests (nulls, uniqueness, referential)</li>
+                        <li>Lineage visualization</li>
+                        <li>Documentation generation</li>
+                        <li>Daily orchestration via dbt Cloud</li>
+                    </ul>
+                </div>
+
+                <div style="background: #e3f2fd; padding: 15px; border-radius: 8px; border-left: 4px solid #1976d2;">
+                    <strong>👨‍🏫 Team Training :</strong>
+                    <ul class="tools-list">
+                        <li>dbt fundamentals course (online)</li>
+                        <li>Hands-on workshops (2-3 sessions)</li>
+                        <li>Databricks + dbt integration deep-dive</li>
+                        <li>Testing & documentation best practices</li>
+                    </ul>
+                </div>
+
+                <p style="margin-top: 15px; color: #666; font-size: 0.95em;">
+                    <strong>Team Size :</strong> 1 DE (lead) + 1 DA (tester) + dbt partner support
+                </p>
+            </div>
+
+            <!-- PHASE 4: PRODUCTION PILOT -->
+            <div class="stage-box">
+                <h3><span class="stage-icon">4️⃣</span> Production Pilot</h3>
+                
+                <div style="background: #fff3cd; padding: 15px; border-radius: 8px; margin-bottom: 15px; border-left: 4px solid #ff9800;">
+                    <strong>📊 Scope :</strong>
+                    <ul class="tools-list">
+                        <li>5-10 core BI pipelines → dbt (from legacy code/notebooks)</li>
+                        <li>Governance framework : naming conventions, testing standards</li>
+                        <li>Self-serve analytics foundation : low-code/NLP interface</li>
+                        <li>Data quality dashboard setup</li>
+                        <li>FinOps tracking (cost per model)</li>
+                    </ul>
+                </div>
+
+                <div style="background: #e3f2fd; padding: 15px; border-radius: 8px; margin-bottom: 15px; border-left: 4px solid #1976d2;">
+                    <strong>🔄 Iterative Development :</strong>
+                    <ul class="tools-list">
+                        <li>Bi-weekly sprints (2-3 models per sprint)</li>
+                        <li>dbt partner + Axa DE co-development</li>
+                        <li>Stakeholder review (Data Office + each entité)</li>
+                        <li>Change impact analysis before production</li>
+                    </ul>
+                </div>
+
+                <div style="background: #e8f5e9; padding: 15px; border-radius: 8px; margin-bottom: 15px; border-left: 4px solid #2e7d32;">
+                    <strong>📈 Success Metrics (Track):</strong>
+                    <ul class="tools-list">
+                        <li>Pipeline execution reliability > 99.5%</li>
+                        <li>Data quality tests pass rate ≥ 99%</li>
+                        <li>Documentation coverage = 100%</li>
+                        <li>Estimated cost savings vs legacy = 10%+ (first calc)</li>
+                        <li>Team satisfaction = 7/10+</li>
+                    </ul>
+                </div>
+
+                <p style="margin-top: 15px; color: #666; font-size: 0.95em;">
+                    <strong>Team Scaling :</strong> 1-2 DE + 1 DA → now 2-3 DE + 2 DA (adding entité #2)
+                </p>
+            </div>
+
+            <!-- PHASE 5: EARLY SCALING -->
+            <div class="stage-box">
+                <h3><span class="stage-icon">5️⃣</span> Early Scaling</h3>
+                
+                <div style="background: #f3e5f5; padding: 15px; border-radius: 8px; margin-bottom: 15px; border-left: 4px solid #7b2de4;">
+                    <strong>🚀 Expansion :</strong>
+                    <ul class="tools-list">
+                        <li>Expand to 2nd entité (Direct Assurance? Axa Partner?)</li>
+                        <li>20-30 pipelines in dbt (cumulative)</li>
+                        <li>Self-serve analytics pilot : 3-4 early adopter analysts</li>
+                        <li>Low-code interface training (drag-drop + NLP)</li>
+                        <li>Feedback loops from first users</li>
+                    </ul>
+                </div>
+
+                <div style="background: #e3f2fd; padding: 15px; border-radius: 8px; border-left: 4px solid #1976d2;">
+                    <strong>📚 Knowledge Base Building :</strong>
+                    <ul class="tools-list">
+                        <li>dbt project templates (for each entité)</li>
+                        <li>Governance playbook (testing, naming, quality)</li>
+                        <li>Internal dbt community (slack channel)</li>
+                        <li>Monthly office hours (de support)</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- PHASE 6: GO-LIVE -->
+            <div class="stage-box">
+                <h3><span class="stage-icon">6️⃣</span> Go-Live & Scaling</h3>
+                
+                <div style="background: #e8f5e9; padding: 15px; border-radius: 8px; margin-bottom: 15px; border-left: 4px solid #2e7d32;">
+                    <strong>🎯 Full Production :</strong>
+                    <ul class="tools-list">
+                        <li>All core BI pipelines → dbt (50+ models live)</li>
+                        <li>Multi-entité framework active</li>
+                        <li>Self-serve analytics available to broader audience</li>
+                        <li>dbt as "best practice" reference</li>
+                    </ul>
+                </div>
+
+                <div style="background: #e8f5e9; padding: 15px; border-radius: 8px; margin-bottom: 15px; border-left: 4px solid #2e7d32;">
+                    <strong>📊 Expected Results :</strong>
+                    <ul class="tools-list">
+                        <li><strong>Data Quality :</strong> 268→20-30 errors/an (TFA was 268→3, expect 85-90% improvement)</li>
+                        <li><strong>Productivité :</strong> 20-25% DE effort reduction confirmed</li>
+                        <li><strong>Coûts Databricks :</strong> 10-15% DBU savings proven</li>
+                        <li><strong>Time-to-Insight :</strong> -50% average (2 weeks → 1 week for new BI request)</li>
+                        <li><strong>Autonomie Métier :</strong> 50%+ self-serve adoption</li>
+                    </ul>
+                </div>
+
+                <p style="margin-top: 15px; color: #666; font-size: 0.95em;">
+                    <strong>🚀 Scaling Roadmap 2026+ :</strong> Expand to remaining entités, enhance self-serve analytics, explore state-aware optimization deeper
+                </p>
+            </div>
+
+            <!-- CRITICAL SUCCESS FACTORS -->
+            <div class="stage-box">
+                <h3><span class="stage-icon">⚡</span> Facteurs Critiques de Succès</h3>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                    <div style="background: #e3f2fd; padding: 15px; border-radius: 8px; border-left: 4px solid #1976d2;">
+                        <strong style="color: #1976d2;">✅ À Mobiliser :</strong>
+                        <ul class="tools-list">
+                            <li>Executive sponsor (Data CTO?)</li>
+                            <li>Dedicated DE team (2-3)</li>
+                            <li>Data Office evangelism</li>
+                            <li>SI partner (CGI priority)</li>
+                            <li>Budget pour training</li>
+                        </ul>
+                    </div>
+                    
+                    <div style="background: #fff3cd; padding: 15px; border-radius: 8px; border-left: 4px solid #ff9800;">
+                        <strong style="color: #ff9800;">⚠️ Risques à Mitigate :</strong>
+                        <ul class="tools-list">
+                            <li>Resistance to change (legacy SQL devs)</li>
+                            <li>Scope creep (stay focused on BI)</li>
+                            <li>Budget approval delays</li>
+                            <li>SI partner capability</li>
+                            <li>Entité alignment issues</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SUMMARY -->
+            <div style="background: #e8f5e9; padding: 20px; border-radius: 8px; margin-top: 30px; border-left: 4px solid #2e7d32;">
+                <h3 style="color: #2e7d32; margin-bottom: 15px;">✅ Récapitulatif : 12 Mois → Full Production</h3>
+                <p style="color: #333; line-height: 2;">
+                    <strong>Phase 1 :</strong> Workshop discovery (7 Jan) + alignment<br>
+                    <strong>Phase 2 :</strong> Decision gate + Planning complete<br>
+                    <strong>Phase 3 :</strong> POC live (2-3 models + team training)<br>
+                    <strong>Phase 4 :</strong> Production pilot (5-10 pipelines, governance)<br>
+                    <strong>Phase 5 :</strong> Early scaling (2nd entité, self-serve pilot)<br>
+                    <strong>Phase 6 :</strong> Go-live full production (50+ models, multi-entité)<br>
+                    <br>
+                    <strong style="color: #2e7d32;">Target Y1 Impact :</strong> €50-100k Databricks savings + 20-25% DE productivity + 85-90% data quality improvement
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function switchTab(tabName) {
+            // Hide all tabs
+            const tabs = document.querySelectorAll('.tab-content');
+            tabs.forEach(tab => tab.classList.remove('active'));
+            
+            // Remove active from all buttons
+            const btns = document.querySelectorAll('.tab-btn');
+            btns.forEach(btn => btn.classList.remove('active'));
+            
+            // Show selected tab
+            document.getElementById(tabName).classList.add('active');
+            
+            // Add active to clicked button
+            event.target.classList.add('active');
+            
+            // Scroll to top
+            window.scrollTo(0, 0);
+        }
+    </script>
+</body>
+</html>
